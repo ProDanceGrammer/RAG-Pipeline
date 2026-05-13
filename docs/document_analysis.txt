@@ -1,0 +1,146 @@
+======================================================================
+DOCUMENT ANALYSIS REPORT
+======================================================================
+
+SUMMARY
+----------------------------------------------------------------------
+Files analyzed: 4
+Total words: 56,309
+Total size: 441.47 KB
+Total sections: 64
+Total code blocks: 178
+Total tables: 3
+Avg words per file: 14,077.25
+Avg sections per file: 16.00
+
+FILE DETAILS
+----------------------------------------------------------------------
+
+File: Database Optimization.md
+  Size: 105.69 KB
+  Words: 10,846
+  Lines: 2,115
+  Sections (##): 10
+  Subsections (###): 8
+  Code blocks: 57
+  Tables: 1
+  Emoji sections: 210
+  Avg section length: 985.09 words
+
+  First sections:
+    - # Database Optimization
+    - # Terms
+    - # Database Optimization
+    - ## Index
+    - ## Database normalization
+    - ### Normal forms
+    - ### Data redundancy
+    - ## Database Sharding
+    - ### **Range-Based Sharding (Dynamic Sharding)**
+    - ### **Hash-Based Sharding (Algorithmic or Key-based Sharding)**
+
+File: Machine Learning.md
+  Size: 15.54 KB
+  Words: 2,120
+  Lines: 757
+  Sections (##): 3
+  Subsections (###): 2
+  Code blocks: 2
+  Tables: 0
+  Emoji sections: 130
+  Avg section length: 529.25 words
+
+  First sections:
+    - # Machine Learning
+    - # Terms
+    - # Choosing a model
+    - # Unsupervised Learning
+    - ## Clustering
+    - # Kmeans Clustering
+    - ### Elbow Method
+    - # Data Leakage
+    - # Loss function
+    - # Model Evaluation
+
+File: OOP.md
+  Size: 246.61 KB
+  Words: 33,616
+  Lines: 6,284
+  Sections (##): 33
+  Subsections (###): 34
+  Code blocks: 65
+  Tables: 0
+  Emoji sections: 774
+  Avg section length: 987.74 words
+
+  First sections:
+    - # OOP
+    - # Terms
+    - # OOP
+    - ## Classes and objects/instances
+    - ## Attributes
+    - ## Methods
+    - ### Alternative constructor
+    - ## Encapsulation
+    - ### Internal or Protected Variables
+    - ### Private variables
+
+File: Python.md
+  Size: 73.63 KB
+  Words: 9,727
+  Lines: 3,401
+  Sections (##): 18
+  Subsections (###): 7
+  Code blocks: 54
+  Tables: 2
+  Emoji sections: 460
+  Avg section length: 511.00 words
+
+  First sections:
+    - # Python
+    - # Terms
+    - # **Naming conventions**
+    - # **Arguments**
+    - ## Keyword arguments
+    - ## Positional arguments
+    - ## **Variable-Length Arguments**
+    - # Built-in functions
+    - ## super()
+    - # `self`
+
+======================================================================
+STRUCTURAL PATTERNS DETECTED
+======================================================================
+
+Standard emoji sections found in documents:
+  - 🔽 What?
+  - 🔁 What does it do?
+  - 🤷‍♂️ Why do we use it?
+  - 🤔 How does it work?
+  - ✍️ How to use it?
+  - 👍 Advantages
+  - 👎 Disadvantages
+  - ↔️ Alternatives
+  - ✅ Best practices
+  - 🛠️ Use cases
+  - 🛑 Worst practices
+
+RECOMMENDATIONS FOR CHUNKING
+----------------------------------------------------------------------
+1. Structure-based chunking by ## headers (primary)
+   - Preserves semantic boundaries
+   - Average section: 16 per file
+
+2. Hierarchical chunking with emoji subsections
+   - Parent: Full ## section
+   - Children: Individual emoji subsections
+
+3. Table handling required
+   - 3 tables detected
+   - Keep tables within parent sections
+
+4. Code block preservation
+   - 178 code blocks detected
+   - Maintain code formatting in chunks
+
+======================================================================

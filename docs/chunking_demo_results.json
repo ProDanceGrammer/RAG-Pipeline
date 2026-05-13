@@ -1,0 +1,46 @@
+{
+  "Structure-Based Chunking": {
+    "chunks": 87,
+    "stats": {
+      "total_chunks": 87,
+      "total_tokens": 43661,
+      "avg_tokens": 501.85057471264366,
+      "min_tokens": 3,
+      "max_tokens": 1700,
+      "strategy": "StructureChunker"
+    }
+  },
+  "Hierarchical Chunking": {
+    "chunks": 861,
+    "stats": {
+      "total_chunks": 861,
+      "total_tokens": 85395,
+      "avg_tokens": 99.18118466898954,
+      "min_tokens": 3,
+      "max_tokens": 1700,
+      "strategy": "HierarchicalChunker"
+    }
+  },
+  "Sliding Window (512/50)": {
+    "chunks": 73,
+    "stats": {
+      "total_chunks": 73,
+      "total_tokens": 48337,
+      "avg_tokens": 662.1506849315068,
+      "min_tokens": 457,
+      "max_tokens": 665,
+      "strategy": "SlidingWindowChunker"
+    }
+  },
+  "Semantic Chunking (Fallback)": {
+    "chunks": 35,
+    "stats": {
+      "total_chunks": 35,
+      "total_tokens": 43688,
+      "avg_tokens": 1248.2285714285715,
+      "min_tokens": 270,
+      "max_tokens": 1300,
+      "strategy": "SemanticChunker"
+    }
+  }
+}
