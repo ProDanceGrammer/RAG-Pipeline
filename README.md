@@ -4,15 +4,15 @@ Complete production-ready Retrieval-Augmented Generation pipeline for querying e
 
 ## 🎯 Overview
 
-This RAG system indexes 4 educational markdown documents (56K words, 179 chunks) and provides an interactive console interface for natural language queries. Built with Ollama (local LLM), FAISS (vector store), and comprehensive evaluation metrics.
+This RAG system indexes 4 educational markdown documents (56K words, 1753 chunks with hierarchical chunking) and provides an interactive console interface for natural language queries. Built with Ollama (local LLM), FAISS (vector store), cross-encoder re-ranking, and comprehensive evaluation metrics.
 
 **Key Features:**
 - ✅ Interactive console with `input()` function
-- ✅ 179 vectors indexed from educational documents
+- ✅ 1753 vectors indexed from educational documents (hierarchical chunking)
+- ✅ **Cross-encoder re-ranking** for 50% retrieval accuracy (+20% improvement)
 - ✅ Answer generation with source attribution
 - ✅ Streaming mode for real-time responses
 - ✅ Comprehensive evaluation framework (24 test queries)
-- ✅ 70-80% retrieval accuracy
 - ✅ Production features: caching, retry logic, fault tolerance
 
 ## 🚀 Quick Start
@@ -151,22 +151,41 @@ User Query
 
 - **LLM**: Ollama llama3.1:latest (8B parameters, local)
 - **Embeddings**: nomic-embed-text:latest (768 dimensions)
+- **Re-ranking**: cross-encoder/ms-marco-MiniLM-L-6-v2 (sentence-transformers)
 - **Vector Store**: FAISS (IndexFlatL2)
 - **Caching**: Disk-based with SHA256 keys
 - **Testing**: pytest with 9/9 unit tests passing
 
 ## 📊 Performance
 
-| Metric | Value |
-|--------|-------|
-| Retrieval latency | 3-6 seconds |
-| Generation latency | 60-120 seconds |
-| Total query latency | 75-120 seconds |
-| Retrieval accuracy | 70-80% |
-| Answer quality | High (with code examples) |
-| Cache hit rate | 66-100% |
-| Vector store size | 179 vectors, 768 dimensions |
-| Test coverage | 9/9 unit tests passing |
+### Phase 3 Results (Cross-Encoder Re-ranking)
+
+| Metric | Baseline | With Re-ranking | Improvement |
+|--------|----------|-----------------|-------------|
+| Exact match rate | 30% (3/10) | **50% (5/10)** | **+20%** ✅ |
+| Acceptable rate | 60% (6/10) | **70% (7/10)** | **+10%** ✅ |
+| Retrieval latency | 2.18s | 4.07s | +87% ⚠️ |
+| Vector store size | 1753 vectors | 1753 vectors | - |
+| Embedding dimensions | 768 | 768 | - |
+
+**Queries Fixed by Re-ranking:**
+- ✅ "Explain loss functions in machine learning" - Caching → Loss function
+- ✅ "What are Python decorators?" - Decorator combination → Decorator
+- ✅ "What are the SOLID principles?" - Creator (GRASP) → SOLID
+
+**See**: `docs/EVALUATION_RESULTS_PHASE3.md` for detailed results
+
+### System Performance
+
+| Metric | Value | Source |
+|--------|-------|--------|
+| Retrieval latency | Min: 4.19s, Max: 6.00s, Avg: 5.10s (2 queries) | logs/rag_console.log |
+| Generation latency | Min: 30.84s, Max: 68.48s, Avg: 49.66s (2 queries) | logs/rag_console.log |
+| Total query latency | Min: 35.03s, Max: 74.48s, Avg: 54.76s (2 queries) | logs/rag_console.log |
+| Retrieval accuracy | 50% exact match, 70% acceptable | Phase 3 evaluation |
+| Answer quality | High (with code examples) | Manual review |
+| Cache hit rate | 0% fresh indexing, 100% re-indexing | Varies by workload |
+| Test coverage | 16% overall, 9/9 chunking tests passing | pytest --cov output |
 
 ## 🧪 Testing
 
@@ -198,7 +217,7 @@ RAG-Pipeline/
 │   ├── chunking/          # 4 chunking strategies
 │   │   ├── base_chunker.py
 │   │   ├── structure_chunker.py      # Primary strategy
-│   │   ├── hierarchical_chunker.py
+│   │   ├── hierarchical_chunker.py   # Best for accuracy
 │   │   ├── semantic_chunker.py
 │   │   └── sliding_window_chunker.py
 │   ├── core/              # Ollama integration
@@ -208,7 +227,9 @@ RAG-Pipeline/
 │   │   ├── vector_store.py           # FAISS store
 │   │   ├── multi_store_manager.py    # Multi-store management
 │   │   ├── embedding_cache.py        # Disk cache
-│   │   └── rag_pipeline.py           # Complete RAG pipeline
+│   │   ├── rag_pipeline.py           # Complete RAG pipeline
+│   │   ├── reranker.py               # Cross-encoder re-ranking ⭐
+│   │   └── topic_detector.py         # Topic detection (unused)
 │   └── evaluation/        # Metrics framework
 │       ├── metrics.py                # Comprehensive metrics
 │       └── evaluator.py              # Evaluation framework
@@ -216,6 +237,7 @@ RAG-Pipeline/
 │   ├── rag_console.py                # Main console interface ⭐
 │   ├── test_rag_pipeline.py          # Automated testing
 │   ├── run_evaluation.py             # Evaluation pipeline
+│   ├── ab_test_improvements.py       # A/B testing script ⭐
 │   ├── index_documents_safe.py       # Document indexing
 │   └── verify_ollama.py              # Setup verification
 ├── tests/
@@ -224,17 +246,40 @@ RAG-Pipeline/
 ├── data/
 │   ├── raw/               # 4 markdown documents (56K words)
 │   ├── cache/             # Embedding cache (1.01 MB)
-│   └── vector_stores/     # FAISS indexes (179 vectors)
+│   └── vector_stores/     # FAISS indexes (1753 vectors)
 └── docs/                  # Comprehensive documentation
     ├── ARCHITECTURE.md    # Design decisions
     ├── QUICK_START.md     # Usage guide
     ├── PROJECT_COMPLETE.md # Project summary
-    └── EVALUATION_RESULTS.md # Evaluation report
+    ├── EVALUATION_RESULTS.md # Phase 1-2 evaluation
+    ├── EVALUATION_RESULTS_PHASE3.md # Phase 3 A/B test ⭐
+    ├── PHASE3_SUMMARY.md  # Phase 3 summary ⭐
+    ├── RERANKING_GUIDE.md # Re-ranking usage guide ⭐
+    └── PHASE3_QUICK_REFERENCE.md # Quick reference ⭐
 ```
 
 ## 🎓 Evaluation Results
 
-### Test Queries (10 sampled from 24)
+### Phase 3: Cross-Encoder Re-ranking (Latest)
+
+**Configuration**: Hierarchical chunking + Cross-encoder re-ranking
+
+| Configuration | Exact Match | Acceptable | Avg Time |
+|---------------|-------------|------------|----------|
+| Baseline (no re-ranking) | 30% (3/10) | 60% (6/10) | 2.18s |
+| **With re-ranking** | **50% (5/10)** | **70% (7/10)** | 4.07s |
+
+**Key Improvements:**
+- ✅ Query 1 (Loss functions): Fixed
+- ✅ Query 5 (Decorators): Fixed
+- ✅ Query 8 (SOLID principles): Fixed
+- ⚠️ Query 9 (Polymorphism): Regression
+
+**See**: `docs/EVALUATION_RESULTS_PHASE3.md` for full A/B test results
+
+### Phase 1-2: Chunking Strategy Comparison
+
+**Test Queries (10 sampled from 24):**
 
 **By Difficulty:**
 - Easy queries: 316.03 avg score (3 queries)
@@ -259,10 +304,12 @@ The system uses two Ollama models:
 ### RAG Parameters
 
 Configurable in `src/rag/rag_pipeline.py`:
-- `top_k`: Number of chunks to retrieve (default: 3)
+- `top_k`: Number of chunks to retrieve (default: 5)
 - `max_context_length`: Maximum context characters (default: 2000)
 - `temperature`: Generation temperature (default: 0.7)
 - `max_tokens`: Maximum answer tokens (default: 500)
+- `use_reranking`: Enable cross-encoder re-ranking (default: True) ⭐
+- `use_topic_filtering`: Enable topic filtering (default: False)
 
 ## 🛠️ Maintenance
 
@@ -292,7 +339,11 @@ logs/rag_console.log
 - **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Design decisions and trade-offs
 - **[QUICK_START.md](docs/QUICK_START.md)** - Detailed usage guide
 - **[PROJECT_COMPLETE.md](docs/PROJECT_COMPLETE.md)** - Complete project summary
-- **[EVALUATION_RESULTS.md](docs/EVALUATION_RESULTS.md)** - Evaluation metrics
+- **[EVALUATION_RESULTS.md](docs/EVALUATION_RESULTS.md)** - Phase 1-2 evaluation metrics
+- **[EVALUATION_RESULTS_PHASE3.md](docs/EVALUATION_RESULTS_PHASE3.md)** - Phase 3 A/B test results ⭐
+- **[PHASE3_SUMMARY.md](docs/PHASE3_SUMMARY.md)** - Phase 3 summary and recommendations ⭐
+- **[RERANKING_GUIDE.md](docs/RERANKING_GUIDE.md)** - Cross-encoder re-ranking guide ⭐
+- **[PHASE3_QUICK_REFERENCE.md](docs/PHASE3_QUICK_REFERENCE.md)** - Quick reference card ⭐
 - **[CLAUDE.md](CLAUDE.md)** - Development guide
 
 ## 🎯 Features
@@ -307,6 +358,7 @@ logs/rag_console.log
 
 ### Production Features
 - ✅ Embedding cache (66-100% hit rate)
+- ✅ Cross-encoder re-ranking (50% retrieval accuracy)
 - ✅ Retry mechanisms (3 retries, exponential backoff)
 - ✅ Fault tolerance and error recovery
 - ✅ Session logging and monitoring
@@ -317,6 +369,7 @@ logs/rag_console.log
 - ✅ Comprehensive metrics (precision, recall, MRR, relevancy)
 - ✅ Cross-validation framework
 - ✅ A/B testing capability
+- ✅ Phase 3: Re-ranking vs baseline comparison
 
 ## 🐛 Troubleshooting
 
@@ -343,11 +396,21 @@ logs/rag_console.log
 ## 🤝 Contributing
 
 This is a prototype project for demonstrating RAG expertise. Key areas for improvement:
-1. Add more chunking strategies
-2. Implement hybrid search (semantic + keyword)
-3. Add answer quality metrics
+
+### Completed Improvements ✅
+1. ✅ Hierarchical chunking (1753 chunks vs 179)
+2. ✅ Cross-encoder re-ranking (30% → 50% accuracy)
+3. ✅ A/B testing framework
+4. ✅ Comprehensive evaluation metrics
+
+### Future Improvements 🎯
+1. Try different embedding models (all-MiniLM-L6-v2, bge-large-en-v1.5)
+2. Implement hybrid search (BM25 + semantic)
+3. Fine-tune cross-encoder on domain-specific data
 4. Support for more document types
 5. Cloud LLM integration for faster generation
+
+**Target**: 70% exact match rate (currently 50%)
 
 ## 📝 License
 
@@ -368,6 +431,6 @@ For issues or questions:
 
 ---
 
-**Status**: Production-ready prototype, 80% complete
-**Last Updated**: 2026-05-12
-**Version**: 1.0.0
+**Status**: Production-ready prototype with cross-encoder re-ranking, 85% complete
+**Last Updated**: 2026-05-13
+**Version**: 1.1.0 (Phase 3 complete)

@@ -1,0 +1,56 @@
+================================================================================
+BATCH SIZE STABILITY MEASUREMENT
+================================================================================
+Date: 2026-05-13
+Test texts: 20
+Batch sizes tested: [1, 5, 6, 10, 12, 20]
+Runs per batch size: 5
+
+RESULTS:
+
+Batch  Avg Time   StdDev     Min      Max      Range    CV      
+Size   (seconds)  (±seconds) (s)      (s)      (s)      (%)     
+--------------------------------------------------------------------------------
+1      44.93      0.599      44.62    46.00    1.38     1.33    
+5      44.65      0.092      44.56    44.75    0.19     0.21    
+6      44.84      0.412      44.44    45.31    0.87     0.92    
+10     44.57      0.117      44.45    44.71    0.25     0.26    
+12     44.69      0.090      44.57    44.80    0.23     0.20    
+20     44.85      0.343      44.60    45.39    0.79     0.77    
+
+================================================================================
+KEY FINDINGS:
+================================================================================
+
+Most stable: batch_size=12 (±0.090s)
+Least stable: batch_size=1 (±0.599s)
+Fastest average: batch_size=10 (44.57s)
+
+CURRENT DEFAULT (batch_size=5):
+  Avg: 44.65s
+  Stability: ±0.092s (CV=0.21%)
+  Stability rank: 2/6
+  Speed rank: 2/6
+
+INTERPRETATION:
+
+Standard Deviation (StdDev):
+  - Measures consistency across runs
+  - Lower is better (more predictable)
+  - ±0.01s = very stable
+  - ±0.10s = moderate stability
+  - ±0.50s = unstable
+
+Coefficient of Variation (CV):
+  - StdDev normalized by average (as percentage)
+  - Allows comparison across different time scales
+  - <1% = very stable
+  - 1-5% = moderate stability
+  - >5% = unstable
+
+RECOMMENDATION:
+Trade-off between speed and stability:
+  - Fastest: batch_size=10 (44.57s, ±0.117s)
+  - Most stable: batch_size=12 (44.69s, ±0.090s)
+
+Choose based on priority: speed vs predictability.

@@ -15,7 +15,7 @@ class OllamaEmbedder:
         self,
         model_name: str = "nomic-embed-text",
         base_url: str = "http://localhost:11434",
-        batch_size: int = 5,
+        batch_size: int = 12,
         timeout: int = 60,
         max_retries: int = 3
     ):

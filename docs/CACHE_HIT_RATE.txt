@@ -1,0 +1,48 @@
+================================================================================
+CACHE HIT RATE MEASUREMENT REPORT
+================================================================================
+Date: 2026-05-13
+Cache directory: C:\Users\YVV\PycharmProjects\Practice\RAG-Pipeline\data\cache\test_cache
+Sample texts: 5
+
+RESULTS BY SCENARIO:
+
+Fresh indexing:
+  Hit rate: 0.0%
+  Hits: 0
+  Misses: 5
+  Total requests: 5
+
+Re-indexing:
+  Hit rate: 100.0%
+  Hits: 5
+  Misses: 0
+  Total requests: 5
+
+Partial update:
+  Hit rate: 60.0%
+  Hits: 3
+  Misses: 2
+  Total requests: 5
+
+INTERPRETATION:
+
+Fresh indexing: 0% hit rate (all cache misses)
+  - First time embedding texts, nothing in cache
+  - All embeddings must be computed
+
+Re-indexing: 100% hit rate (all cache hits)
+  - Same texts already in cache
+  - No computation needed, instant retrieval
+
+Partial update: 60% hit rate (3/5 hits)
+  - 3 texts already cached (hits)
+  - 2 new texts need computation (misses)
+  - Typical scenario for incremental updates
+
+CONCLUSION:
+Cache hit rate varies by workload:
+  - 0% for fresh indexing
+  - 100% for re-indexing
+  - 60% for partial updates (in this test)
+  - Real-world: depends on how many texts are new vs repeated

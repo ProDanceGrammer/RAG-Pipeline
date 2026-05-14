@@ -69,8 +69,8 @@ ollama pull llama3.1:7b
 ollama run llama3.1:7b "Hello, test message"
 ```
 
-## Expected Download Times
-- nomic-embed-text: ~1-2 minutes
+## Expected Download Times (estimates)
+- nomic-embed-text: ~1-2 minutes (depending on internet speed)
 - llama3.1:7b: ~5-10 minutes (depending on internet speed)
 
 ## After Installation

@@ -1,13 +1,17 @@
 """RAG Pipeline with answer generation."""
 import logging
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 import time
 
 from ..core.ollama_client import OllamaClient
 from ..core.ollama_embedder import OllamaEmbedder
 from ..rag.multi_store_manager import MultiStoreManager
+from ..rag.hybrid_retriever import HybridRetriever
 
 logger = logging.getLogger(__name__)
+
+# Generic sections to filter out from retrieval results
+GENERIC_SECTIONS = {'Terms', 'Introduction', 'Overview', 'Summary'}
 
 
 class RAGPipeline:
@@ -20,7 +24,11 @@ class RAGPipeline:
         manager: MultiStoreManager,
         strategy_name: str = "structure",
         top_k: int = 3,
-        max_context_length: int = 2000
+        max_context_length: int = 2000,
+        use_reranking: bool = True,
+        use_topic_filtering: bool = False,
+        use_hybrid_search: bool = True,
+        hybrid_alpha: float = 0.7
     ):
         """
         Initialize RAG pipeline.
@@ -32,6 +40,10 @@ class RAGPipeline:
             strategy_name: Chunking strategy to use
             top_k: Number of chunks to retrieve
             max_context_length: Maximum context length in characters
+            use_reranking: Enable cross-encoder re-ranking
+            use_topic_filtering: Enable topic-based filtering
+            use_hybrid_search: Enable hybrid search (BM25 + semantic)
+            hybrid_alpha: Weight for semantic search (0.0=pure BM25, 1.0=pure semantic)
         """
         self.embedder = embedder
         self.generator = generator
@@ -39,7 +51,30 @@ class RAGPipeline:
         self.strategy_name = strategy_name
         self.top_k = top_k
         self.max_context_length = max_context_length
+        self.use_reranking = use_reranking
+        self.use_topic_filtering = use_topic_filtering
+        self.use_hybrid_search = use_hybrid_search
+        self.hybrid_alpha = hybrid_alpha
         self.logger = logging.getLogger(__name__)
+
+        # Lazy load reranker and topic detector
+        self.reranker = None
+        self.topic_detector = None
+        self.hybrid_retriever = None
+
+        if use_reranking:
+            from ..rag.reranker import CrossEncoderReranker
+            self.reranker = CrossEncoderReranker()
+            self.logger.info("Cross-encoder re-ranking enabled")
+
+        if use_topic_filtering:
+            from ..rag import topic_detector
+            self.topic_detector = topic_detector
+            self.logger.info("Topic filtering enabled")
+
+        if use_hybrid_search:
+            self.hybrid_retriever = HybridRetriever()
+            self.logger.info(f"Hybrid search enabled (alpha={hybrid_alpha})")
 
     def retrieve(self, query: str) -> List[Tuple[Dict, float]]:
         """
@@ -53,20 +88,89 @@ class RAGPipeline:
         """
         self.logger.info(f"Retrieving for query: {query}")
 
+        # Detect topic if filtering enabled
+        topic = None
+        if self.use_topic_filtering and self.topic_detector:
+            topic = self.topic_detector.detect_topic(query)
+            if topic:
+                self.logger.debug(f"Detected topic: {topic}")
+
         # Embed query
         start_time = time.time()
         query_emb = self.embedder.embed_single(query)
         embed_time = time.time() - start_time
         self.logger.debug(f"Query embedding took {embed_time:.2f}s")
 
-        # Search
-        start_time = time.time()
-        results = self.manager.search(self.strategy_name, query_emb, top_k=self.top_k)
-        search_time = time.time() - start_time
-        self.logger.debug(f"Search took {search_time:.2f}s")
+        # Search (get more results if re-ranking or using hybrid search)
+        search_k = self.top_k * 4 if (self.use_reranking or self.use_hybrid_search) else self.top_k
 
-        self.logger.info(f"Retrieved {len(results)} chunks")
-        return results
+        # Perform search based on configuration
+        if self.use_hybrid_search and self.hybrid_retriever:
+            # Hybrid search: combine BM25 and semantic
+            start_time = time.time()
+
+            # Get BM25 results
+            bm25_start = time.time()
+            bm25_results = self.manager.search_bm25(self.strategy_name, query, top_k=search_k)
+            bm25_time = time.time() - bm25_start
+            self.logger.debug(f"BM25 search took {bm25_time:.2f}s")
+
+            # Get semantic results
+            semantic_start = time.time()
+            semantic_results = self.manager.search(self.strategy_name, query_emb, top_k=search_k)
+            semantic_time = time.time() - semantic_start
+            self.logger.debug(f"Semantic search took {semantic_time:.2f}s")
+
+            # Fuse results
+            fusion_start = time.time()
+            results = self.hybrid_retriever.fuse(bm25_results, semantic_results, alpha=self.hybrid_alpha)
+            fusion_time = time.time() - fusion_start
+            self.logger.debug(f"Fusion took {fusion_time:.2f}s")
+
+            search_time = time.time() - start_time
+            self.logger.debug(f"Hybrid search took {search_time:.2f}s total")
+        else:
+            # Semantic-only search (original behavior)
+            start_time = time.time()
+            results = self.manager.search(self.strategy_name, query_emb, top_k=search_k)
+            search_time = time.time() - start_time
+            self.logger.debug(f"Semantic search took {search_time:.2f}s")
+
+        # Filter by topic if detected
+        if topic and self.use_topic_filtering:
+            filtered_by_topic = [
+                (metadata, score)
+                for metadata, score in results
+                if metadata.get('topic') == topic
+            ]
+            if filtered_by_topic:  # Only use filtered if we got results
+                self.logger.debug(f"Filtered to {len(filtered_by_topic)} results by topic '{topic}'")
+                results = filtered_by_topic
+            else:
+                self.logger.debug(f"No results for topic '{topic}', using all results")
+
+        # Filter out generic sections
+        filtered_results = [
+            (metadata, score)
+            for metadata, score in results
+            if metadata.get('section', '') not in GENERIC_SECTIONS
+        ]
+
+        if len(filtered_results) < len(results):
+            self.logger.debug(f"Filtered out {len(results) - len(filtered_results)} generic sections")
+
+        # Re-rank if enabled
+        if self.use_reranking and self.reranker and filtered_results:
+            start_time = time.time()
+            filtered_results = self.reranker.rerank(query, filtered_results, top_k=self.top_k)
+            rerank_time = time.time() - start_time
+            self.logger.debug(f"Re-ranking took {rerank_time:.2f}s")
+        else:
+            # Just take top_k if not re-ranking
+            filtered_results = filtered_results[:self.top_k]
+
+        self.logger.info(f"Retrieved {len(filtered_results)} chunks (after filtering)")
+        return filtered_results
 
     def format_context(self, results: List[Tuple[Dict, float]]) -> str:
         """

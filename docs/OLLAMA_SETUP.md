@@ -46,17 +46,19 @@ python -c "import requests; print(requests.post('http://localhost:11434/api/embe
 
 ## Expected Performance on GTX 1650Ti (4GB VRAM) + 16GB RAM
 
+**Note**: These are estimates based on typical hardware performance, not measured values.
+
 ### Embedding (nomic-embed-text)
 - Model size: ~274MB
-- VRAM usage: ~500MB
-- Speed: ~1-2 seconds per document
-- Batch size: 10-20 documents
+- VRAM usage: ~500MB (estimated)
+- Speed: ~1-2 seconds per document (estimated)
+- Batch size: 10-20 documents (estimated)
 
-### Generation (llama3.1:7b)
+### Generation (llama3.1:8b)
 - Model size: ~4.7GB
 - VRAM usage: ~4GB (will use full VRAM)
-- Speed: ~10-30 seconds per query
-- Tokens/sec: ~5-15 tokens/sec
+- Speed: Measured 30-68 seconds per query (2 queries)
+- Tokens/sec: ~5-15 tokens/sec (estimated)
 
 ### Tips for GTX 1650Ti
 - Use `nomic-embed-text` for embeddings (lightweight)

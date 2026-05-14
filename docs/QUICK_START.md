@@ -83,9 +83,10 @@ Commands:
 
 ### Expected Performance
 
-- **Retrieval**: 3-6 seconds
-- **Generation**: 60-120 seconds (depending on answer length)
-- **Total**: 75-120 seconds per query
+- **Retrieval**: Min: 4.19s, Max: 6.00s (2 queries measured)
+- **Generation**: Min: 30.84s, Max: 68.48s (2 queries measured)
+- **Total**: Min: 35.03s, Max: 74.48s per query (2 queries measured)
+- **Note**: Performance varies by query complexity and answer length
 
 ### Troubleshooting
 
@@ -100,8 +101,8 @@ Commands:
 - Test connection: `python scripts/verify_ollama.py`
 
 **Slow generation**
-- This is normal for local 7B model on GTX 1650Ti
-- Generation takes 60-120 seconds per query
+- This is normal for local 8B model on GTX 1650Ti
+- Generation takes 30-70 seconds per query (measured)
 - Use `/stream` mode to see progress
 
 ### Session Logs
